@@ -2,18 +2,24 @@
 
 var Generator = require('yeoman-generator');
 var chalk = require('chalk');
-var yosay = require('yosay');
 var Spinner = require('cli-spinner').Spinner;
 var execFile = require('child_process').execFile;
 var fs = require('fs-extra');
 
 module.exports = Generator.extend({
   prompting: function () {
+    var ml = [
+      '',
+      chalk.red('     .\'\'-`'),
+      chalk.red('    ...\'\'\'.'),
+      chalk.red('   .`  `\'\'\'-     `......``'),
+      chalk.red('  .`    .\'\'\'\'..\'\'\'\'\'\'\'.`..\'.`'),
+      chalk.red(' ..      `\'\'\'\'\'\'\'\'\'.`       `..`'),
+      chalk.red('`.         `.....`              ``'),
+      ''
+    ].join('\n');
 
-    // Have Yeoman greet the user.
-    this.log(yosay(
-      'Welcome to the wicked ' + chalk.red('Media Lounge Clone') + ' generator!'
-    ));
+    this.log(ml);
 
     var prompts = [{
       type: 'input',
