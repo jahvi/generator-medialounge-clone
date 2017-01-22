@@ -112,6 +112,31 @@ module.exports = Generator.extend({
           this.log.ok('Generating local.xml file...');
         }
       );
+    },
+    downloadMedia() {
+      var spinner = new Spinner('Downloading media folder...');
+
+      spinner.setSpinnerString(18);
+      spinner.start();
+
+      execFile(
+        'rsync',
+        [
+          '-azP',
+          '--ignore-existing',
+          '--exclude=*cache*',
+          `mldemo:~/projects/${this.props.repo}/media/`,
+          `${this.destinationRoot()}/media`
+        ],
+        error => {
+          if (error) {
+            this.log.error(error);
+          }
+
+          spinner.stop(true);
+          this.log.ok('Downloading media folder...');
+        }
+      );
     }
   }
 });
