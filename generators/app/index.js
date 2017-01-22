@@ -154,5 +154,10 @@ module.exports = Generator.extend({
         this.log.ok('Updating hosts file...');
       });
     }
+  },
+
+  end: function () {
+    var open = require('opener');
+    open(`http://${this.props.repo}.medialounge.dev`);
   }
 });
