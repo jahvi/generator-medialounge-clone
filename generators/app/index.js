@@ -36,6 +36,14 @@ module.exports = Generator.extend({
       name: 'dbName',
       message: 'Database name?',
       default: `mg_${this.appname}`
+    }, {
+      type: 'list',
+      name: 'server',
+      message: 'Source server?',
+      choices: [
+        'ML Demo',
+        'ML Demo 2'
+      ]
     }];
 
     return this.prompt(prompts).then(props => {
@@ -105,6 +113,8 @@ module.exports = Generator.extend({
     },
     downloadMedia() {
       var spinner = new Spinner('Downloading media folder...');
+      var server = this.props.server === 'ML Demo' ? 'mldemo' : 'mldemo2';
+      var prefix = this.props.server === 'ML Demo' ? '' : '/httpdocs';
 
       spinner.setSpinnerString(18);
       spinner.start();
@@ -115,7 +125,7 @@ module.exports = Generator.extend({
           '-azP',
           '--ignore-existing',
           '--exclude=*cache*',
-          `mldemo:~/projects/${this.props.repo}/media/`,
+          `${server}:~${prefix}/projects/${this.props.repo}/media/`,
           `${this.destinationRoot()}/media`
         ],
         error => {
@@ -130,7 +140,7 @@ module.exports = Generator.extend({
     },
     updateHosts() {
       var hostile = require('hostile');
-      var spinner = new Spinner('Downloading media folder...');
+      var spinner = new Spinner('Updating hosts file...');
 
       spinner.setSpinnerString(18);
       spinner.start();
