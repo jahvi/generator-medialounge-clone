@@ -33,16 +33,6 @@ module.exports = Generator.extend({
       default: '192.168.56.101'
     }, {
       type: 'input',
-      name: 'dbUsername',
-      message: 'Database username?',
-      default: 'root'
-    }, {
-      type: 'password',
-      name: 'dbPassword',
-      message: 'Database password?',
-      default: 'root'
-    }, {
-      type: 'input',
       name: 'dbName',
       message: 'Database name?',
       default: `mg_${this.appname}`
@@ -97,8 +87,8 @@ module.exports = Generator.extend({
         [
           'local-config:generate',
           this.props.dbHost,
-          this.props.dbUsername,
-          this.props.dbPassword,
+          'root',
+          'root',
           this.props.dbName,
           'files',
           'admin'
