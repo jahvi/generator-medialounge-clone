@@ -137,6 +137,22 @@ module.exports = Generator.extend({
           this.log.ok('Downloading media folder...');
         }
       );
+    },
+    updateHosts() {
+      var hostile = require('hostile');
+      var spinner = new Spinner('Downloading media folder...');
+
+      spinner.setSpinnerString(18);
+      spinner.start();
+
+      hostile.set(this.props.dbHost, `${this.props.repo}.medialounge.dev`, err => {
+        if (err) {
+          this.log.error(err);
+        }
+
+        spinner.stop(true);
+        this.log.ok('Updating hosts file...');
+      });
     }
   }
 });
