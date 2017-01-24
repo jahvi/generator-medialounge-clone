@@ -138,6 +138,28 @@ module.exports = Generator.extend({
         }
       );
     },
+    importDatabase() {
+      var spinner = new Spinner('Creating and importing database...');
+      var mysql = require('mysql');
+
+      spinner.setSpinnerString(18);
+      spinner.start();
+
+      var connection = mysql.createConnection({
+        host: this.props.dbHost,
+        user: 'root',
+        password: 'root'
+      });
+
+      connection.query(`CREATE DATABASE ${this.props.dbName} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`, err => {
+        if (err) {
+          this.log.error(err);
+        }
+
+        spinner.stop(true);
+        this.log.ok('Creating and importing database...');
+      });
+    },
     updateHosts() {
       var hostile = require('hostile');
       var spinner = new Spinner('Updating hosts file...');
