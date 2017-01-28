@@ -126,7 +126,7 @@ module.exports = Generator.extend({
       execFile(
         'rsync',
         [
-          '-azP',
+          '-az',
           '--ignore-existing',
           '--exclude=*cache*',
           `${server}:~${prefix}/projects/${this.props.repo}/media/`,
