@@ -82,6 +82,7 @@ module.exports = Generator.extend({
       );
     },
     createLocalXml() {
+      var done = this.async();
       var localXml = this.destinationPath('app/etc/local.xml');
       var spinner = new Spinner('Generating local.xml file...');
 
@@ -108,10 +109,13 @@ module.exports = Generator.extend({
 
           spinner.stop(true);
           this.log.ok('Generating local.xml file...');
+
+          done();
         }
       );
     },
     downloadMedia() {
+      var done = this.async();
       var spinner = new Spinner('Downloading media folder...');
       var server = this.props.server === 'ML Demo' ? 'mldemo' : 'mldemo2';
       var prefix = this.props.server === 'ML Demo' ? '' : '/httpdocs';
@@ -135,10 +139,13 @@ module.exports = Generator.extend({
 
           spinner.stop(true);
           this.log.ok('Downloading media folder...');
+
+          done();
         }
       );
     },
     importDatabase() {
+      var done = this.async();
       var spinner = new Spinner('Creating and importing database...');
       var mysql = require('mysql');
 
@@ -151,16 +158,63 @@ module.exports = Generator.extend({
         password: 'root'
       });
 
-      connection.query(`CREATE DATABASE ${this.props.dbName} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`, err => {
+      connection.query(`CREATE DATABASE IF NOT EXISTS ${this.props.dbName} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`, err => {
         if (err) {
           this.log.error(err);
         }
 
-        spinner.stop(true);
-        this.log.ok('Creating and importing database...');
+        execFile(
+          'magedbm',
+          [
+            'get',
+            this.props.repo,
+            '-f'
+          ],
+          (error, stdout) => {
+            spinner.stop(true);
+
+            if (error) {
+              this.log.error(error);
+            }
+
+            if (stdout.includes('Finished')) {
+              this.log.ok('Creating and importing database...');
+
+              spinner = new Spinner('Updating base URLs...');
+
+              spinner.setSpinnerString(18);
+              spinner.start();
+
+              execFile(
+                'n98-magerun',
+                [
+                  'sys:store:config:base-url:set',
+                  '-b',
+                  `http://${this.props.repo}.medialounge.dev/`
+                ],
+                error => {
+                  spinner.stop(true);
+
+                  if (error) {
+                    this.log.error('Could not update base URLs, please update manually...');
+                  } else {
+                    this.log.ok('Updating base URLs...');
+                  }
+
+                  done();
+                }
+              );
+            } else {
+              this.log.error('Database created but no import file found, please import manually...');
+            }
+
+            done();
+          }
+        );
       });
     },
     updateHosts() {
+      var done = this.async();
       var hostile = require('hostile');
       var spinner = new Spinner('Updating hosts file...');
 
@@ -174,6 +228,8 @@ module.exports = Generator.extend({
 
         spinner.stop(true);
         this.log.ok('Updating hosts file...');
+
+        done();
       });
     }
   },
