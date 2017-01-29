@@ -244,10 +244,5 @@ module.exports = Generator.extend({
         done();
       });
     }
-  },
-
-  end: function () {
-    var open = require('opener');
-    open(`http://${this.props.repo}.medialounge.dev`);
   }
 });
