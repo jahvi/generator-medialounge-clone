@@ -4,6 +4,7 @@ var Generator = require('yeoman-generator');
 var chalk = require('chalk');
 var Spinner = require('cli-spinner').Spinner;
 var execFile = require('child_process').execFile;
+var execFileSync = require('child_process').execFileSync;
 var fs = require('fs-extra');
 
 module.exports = Generator.extend({
@@ -116,9 +117,20 @@ module.exports = Generator.extend({
     },
     downloadMedia() {
       var done = this.async();
-      var spinner = new Spinner('Downloading media folder...');
+
       var server = this.props.server === 'ML Demo' ? 'mldemo' : 'mldemo2';
       var prefix = this.props.server === 'ML Demo' ? '' : '/httpdocs';
+
+      var response = execFileSync(
+        'ssh',
+        [
+          server,
+          `du -hs ~${prefix}/projects/${this.props.repo}/media | cut -f1`
+        ]
+      );
+
+      var mediaSize = response.toString().trim();
+      var spinner = new Spinner(`Downloading media folder (${mediaSize})...`);
 
       spinner.setSpinnerString(18);
       spinner.start();
@@ -138,7 +150,7 @@ module.exports = Generator.extend({
           }
 
           spinner.stop(true);
-          this.log.ok('Downloading media folder...');
+          this.log.ok(`Downloading media folder (${mediaSize})...`);
 
           done();
         }
