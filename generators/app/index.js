@@ -15,8 +15,8 @@ module.exports = Generator.extend({
     fs.isEmpty(this.destinationRoot(), empty => {
       if (!empty) {
         this.env.error('Make sure current directory is empty before running generator');
-        done();
       }
+      done();
     });
   },
   prompting: function () {
