@@ -98,7 +98,9 @@ module.exports = Generator.extend({
       spinner.setSpinnerString(18);
       spinner.start();
 
-      fs.removeSync(localXml);
+      if (fs.existsSync(localXml)) {
+        fs.removeSync(localXml);
+      }
 
       execFile(
         'n98-magerun',
@@ -116,10 +118,42 @@ module.exports = Generator.extend({
             this.log.error(error);
           }
 
-          spinner.stop(true);
-          this.log.ok('Generating local.xml file...');
+          var server = this.props.server === 'ML Demo' ? 'mldemo' : 'mldemo2';
+          var prefix = this.props.server === 'ML Demo' ? '' : '/httpdocs';
 
-          done();
+          execFile(
+            'ssh',
+            [
+              server,
+              `cat ~${prefix}/projects/${this.props.repo}/app/etc/local.xml`
+            ],
+            (error, stdout) => {
+              if (error) {
+                this.log.error(error);
+              }
+
+              // Get table prefix if exists
+              var xml = stdout;
+              var match = xml.match(/<table_prefix>(.+?)<\/table_prefix>/);
+              var tablePrefix = match[1] ? match[1] : '<![CDATA[]]>';
+
+              // Get generated local.xml file
+              var data = fs.readFileSync(localXml, 'utf8');
+
+              // Replace table_prefix node and overwrite local.xml file
+              var newXml = data.replace(
+                '<table_prefix></table_prefix>',
+                `<table_prefix>${tablePrefix}</table_prefix>`
+              );
+
+              fs.writeFileSync(localXml, newXml, 'utf8');
+
+              spinner.stop(true);
+              this.log.ok('Generating local.xml file...');
+
+              done();
+            }
+          );
         }
       );
     },
