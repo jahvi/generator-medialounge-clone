@@ -5,9 +5,20 @@ var chalk = require('chalk');
 var Spinner = require('cli-spinner').Spinner;
 var execFile = require('child_process').execFile;
 var execFileSync = require('child_process').execFileSync;
-var fs = require('fs-extra');
+var fs = require('extfs');
 
 module.exports = Generator.extend({
+  initializing: function () {
+    var done = this.async();
+
+    // Make sure current directory is empty
+    fs.isEmpty(this.destinationRoot(), empty => {
+      if (!empty) {
+        this.env.error('Make sure current directory is empty before running generator');
+        done();
+      }
+    });
+  },
   prompting: function () {
     var ml = [
       '',
@@ -59,9 +70,6 @@ module.exports = Generator.extend({
 
       spinner.setSpinnerString(18);
       spinner.start();
-
-      // Make sure current directory is empty
-      fs.emptyDirSync(this.destinationRoot());
 
       execFile(
         'git',
