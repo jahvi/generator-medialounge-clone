@@ -83,6 +83,18 @@ module.exports = Generator.extend({
             this.log.error(error);
           }
 
+          this.mainFolder = '';
+          this.basePath = this.destinationPath();
+
+          this.server = this.props.server === 'ML Demo' ? 'mldemo' : 'mldemo2';
+          this.prefix = this.props.server === 'ML Demo' ? '' : '/httpdocs';
+
+          // Update base path if main folder exists
+          if (fs.existsSync(this.destinationPath('main'))) {
+            this.mainFolder = 'main/';
+            this.basePath = this.destinationPath('main');
+          }
+
           spinner.stop(true);
           this.log.ok('Cloning git repo...');
 
@@ -92,7 +104,7 @@ module.exports = Generator.extend({
     },
     createLocalXml() {
       var done = this.async();
-      var localXml = this.destinationPath('app/etc/local.xml');
+      var localXml = `${this.basePath}/app/etc/local.xml`;
       var spinner = new Spinner('Generating local.xml file...');
 
       spinner.setSpinnerString(18);
@@ -113,19 +125,19 @@ module.exports = Generator.extend({
           'files',
           'admin'
         ],
+        {
+          cwd: this.basePath
+        },
         error => {
           if (error) {
             this.log.error(error);
           }
 
-          var server = this.props.server === 'ML Demo' ? 'mldemo' : 'mldemo2';
-          var prefix = this.props.server === 'ML Demo' ? '' : '/httpdocs';
-
           execFile(
             'ssh',
             [
-              server,
-              `cat ~${prefix}/projects/${this.props.repo}/app/etc/local.xml`
+              this.server,
+              `cat ~${this.prefix}/projects/${this.props.repo}/${this.mainFolder}app/etc/local.xml`
             ],
             (error, stdout) => {
               if (error) {
@@ -160,14 +172,12 @@ module.exports = Generator.extend({
     downloadMedia() {
       var done = this.async();
 
-      var server = this.props.server === 'ML Demo' ? 'mldemo' : 'mldemo2';
-      var prefix = this.props.server === 'ML Demo' ? '' : '/httpdocs';
-
+      // Get media folder size from server
       var response = execFileSync(
         'ssh',
         [
-          server,
-          `du -hs ~${prefix}/projects/${this.props.repo}/media | cut -f1`
+          this.server,
+          `du -hs ~${this.prefix}/projects/${this.props.repo}/${this.mainFolder}media | cut -f1`
         ]
       );
 
@@ -183,7 +193,7 @@ module.exports = Generator.extend({
           '-az',
           '--ignore-existing',
           '--exclude=*cache*',
-          `${server}:~${prefix}/projects/${this.props.repo}/media/`,
+          `${this.server}:~${this.prefix}/projects/${this.props.repo}/${this.mainFolder}media/`,
           `${this.destinationRoot()}/media`
         ],
         error => {
@@ -197,6 +207,27 @@ module.exports = Generator.extend({
           done();
         }
       );
+    },
+    updateHosts() {
+      var done = this.async();
+      var hostile = require('hostile');
+      var spinner = new Spinner('Updating hosts file...');
+
+      var main = this.mainFolder ? 'main' : '';
+
+      spinner.setSpinnerString(18);
+      spinner.start();
+
+      hostile.set(this.props.dbHost, `${this.props.repo}.medialounge${main}.dev`, err => {
+        if (err) {
+          this.log.error(err);
+        }
+
+        spinner.stop(true);
+        this.log.ok('Updating hosts file...');
+
+        done();
+      });
     },
     importDatabase() {
       var done = this.async();
@@ -224,6 +255,9 @@ module.exports = Generator.extend({
             this.props.repo,
             '-f'
           ],
+          {
+            cwd: this.basePath
+          },
           (error, stdout) => {
             spinner.stop(true);
 
@@ -239,13 +273,18 @@ module.exports = Generator.extend({
               spinner.setSpinnerString(18);
               spinner.start();
 
+              var main = this.mainFolder ? 'main' : '';
+
               execFile(
                 'n98-magerun',
                 [
                   'sys:store:config:base-url:set',
                   '-b',
-                  `http://${this.props.repo}.medialounge.dev/`
+                  `http://${this.props.repo}.medialounge${main}.dev/`
                 ],
+                {
+                  cwd: this.basePath
+                },
                 error => {
                   spinner.stop(true);
 
@@ -255,35 +294,18 @@ module.exports = Generator.extend({
                     this.log.ok('Updating base URLs...');
                   }
 
-                  done();
+                  process.exit(0);
                 }
               );
             } else {
               this.log.error('Database created but no import file found, please import manually...');
+
+              process.exit(0);
             }
 
             done();
           }
         );
-      });
-    },
-    updateHosts() {
-      var done = this.async();
-      var hostile = require('hostile');
-      var spinner = new Spinner('Updating hosts file...');
-
-      spinner.setSpinnerString(18);
-      spinner.start();
-
-      hostile.set(this.props.dbHost, `${this.props.repo}.medialounge.dev`, err => {
-        if (err) {
-          this.log.error(err);
-        }
-
-        spinner.stop(true);
-        this.log.ok('Updating hosts file...');
-
-        done();
       });
     }
   }
