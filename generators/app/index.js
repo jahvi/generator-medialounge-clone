@@ -194,7 +194,7 @@ module.exports = Generator.extend({
           '--ignore-existing',
           '--exclude=*cache*',
           `${this.server}:~${this.prefix}/projects/${this.props.repo}/${this.mainFolder}media/`,
-          `${this.destinationRoot()}/media`
+          `${this.destinationRoot()}/${this.mainFolder}media`
         ],
         error => {
           if (error) {
